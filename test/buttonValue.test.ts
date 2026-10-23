@@ -15,11 +15,18 @@ describe('button value encoding', () => {
     assert.deepEqual(decodeButtonValue(encodeButtonValue(tricky)), tricky);
   });
 
+  it('round-trips a confirmation, and omits it when absent', () => {
+    const withConfirmation = { ...button, confirmation: "Great, we'll put you forward 🎉" };
+    assert.deepEqual(decodeButtonValue(encodeButtonValue(withConfirmation)), withConfirmation);
+    assert.equal('confirmation' in decodeButtonValue(encodeButtonValue(button)), false);
+  });
+
   it('rejects malformed values', () => {
     assert.throws(() => decodeButtonValue('not json'));
     assert.throws(() => decodeButtonValue('null'), /Invalid button value/);
     assert.throws(() => decodeButtonValue(JSON.stringify({ requestId: 'r', value: 'v' })), /Invalid button value/);
     assert.throws(() => decodeButtonValue(JSON.stringify({ ...button, value: 1 })), /Invalid button value/);
+    assert.throws(() => decodeButtonValue(JSON.stringify({ ...button, confirmation: 1 })), /Invalid button value/);
   });
 });
 

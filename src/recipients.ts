@@ -9,17 +9,23 @@ export function classifyRecipient(recipient: string): RecipientKind | undefined 
   return undefined;
 }
 
-// Returns the conversation ID to post to: the channel itself, or a DM with the user.
-export async function resolveChannel(client: webApi.WebClient, recipient: string): Promise<string> {
+export interface ResolvedRecipient {
+  channel: string;
+  // Set when the recipient is a person (a DM), not a channel.
+  userId?: string;
+}
+
+// Returns the conversation to post to: the channel itself, or a DM with the user.
+export async function resolveRecipient(client: webApi.WebClient, recipient: string): Promise<ResolvedRecipient> {
   switch (classifyRecipient(recipient)) {
     case 'channel':
-      return recipient;
+      return { channel: recipient };
     case 'user':
-      return openDm(client, recipient);
+      return { channel: await openDm(client, recipient), userId: recipient };
     case 'email': {
       const { user } = await client.users.lookupByEmail({ email: recipient });
       if (!user?.id) throw new Error('users_not_found');
-      return openDm(client, user.id);
+      return { channel: await openDm(client, user.id), userId: user.id };
     }
     default:
       throw new Error(`Unrecognized recipient: ${recipient}`);

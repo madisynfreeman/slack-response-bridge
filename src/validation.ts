@@ -5,6 +5,7 @@ export interface ResponseOption {
   label: string;
   value: string;
   style?: 'primary' | 'danger';
+  confirmation?: string;
 }
 
 export interface MessageRequest {
@@ -70,7 +71,7 @@ export function validateMessageRequest(body: unknown, defaultCallbackUrl?: strin
   const validResponses: ResponseOption[] = [];
   for (const [i, response] of responses.entries()) {
     if (typeof response !== 'object' || response === null) return fail(`responses[${i}] must be an object`);
-    const { label, value, style } = response as Record<string, unknown>;
+    const { label, value, style, confirmation } = response as Record<string, unknown>;
 
     if (!isNonEmptyString(label)) return fail(`responses[${i}].label must be a non-empty string`);
     if (label.length > MAX_LABEL_LENGTH) {
@@ -80,16 +81,19 @@ export function validateMessageRequest(body: unknown, defaultCallbackUrl?: strin
     if (style !== undefined && style !== 'primary' && style !== 'danger') {
       return fail(`responses[${i}].style must be "primary" or "danger"`);
     }
+    if (confirmation !== undefined && !isNonEmptyString(confirmation)) {
+      return fail(`responses[${i}].confirmation must be a non-empty string`);
+    }
 
-    const encodedLength = encodeButtonValue({ requestId, value, callbackUrl: resolvedCallbackUrl }).length;
+    const encodedLength = encodeButtonValue({ requestId, value, callbackUrl: resolvedCallbackUrl, confirmation }).length;
     if (encodedLength > MAX_BUTTON_VALUE_LENGTH) {
       return fail(
         `responses[${i}] button payload is ${encodedLength} characters (max ${MAX_BUTTON_VALUE_LENGTH}); ` +
-          'shorten value, requestId, or callbackUrl',
+          'shorten value, confirmation, requestId, or callbackUrl',
       );
     }
 
-    validResponses.push(style ? { label, value, style } : { label, value });
+    validResponses.push({ label, value, ...(style && { style }), ...(confirmation && { confirmation }) });
   }
 
   return {

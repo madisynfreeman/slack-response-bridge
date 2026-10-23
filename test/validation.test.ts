@@ -70,6 +70,21 @@ describe('validateMessageRequest', () => {
     expectError({ ...validBody, responses: [{ label: 'x'.repeat(76), value: 'v' }] }, /responses\[0\]\.label.*75/);
   });
 
+  it('accepts an optional confirmation and rejects an empty or non-string one', () => {
+    const responses = [{ label: 'Yes', value: 'yes', confirmation: "Great, we'll put you forward 🎉" }];
+    const result = validateMessageRequest({ ...validBody, responses });
+    assert.deepEqual(result.ok && result.request.responses, responses);
+    expectError({ ...validBody, responses: [{ label: 'A', value: 'a', confirmation: '' }] }, /responses\[0\]\.confirmation/);
+    expectError({ ...validBody, responses: [{ label: 'A', value: 'a', confirmation: 42 }] }, /responses\[0\]\.confirmation/);
+  });
+
+  it('counts the confirmation toward the 2000 character button payload limit', () => {
+    expectError(
+      { ...validBody, responses: [{ label: 'A', value: 'a', confirmation: 'x'.repeat(1950) }] },
+      /payload is \d+ characters \(max 2000\)/,
+    );
+  });
+
   it('rejects missing values and unknown styles', () => {
     expectError({ ...validBody, responses: [{ label: 'A' }] }, /responses\[0\]\.value/);
     expectError({ ...validBody, responses: [{ label: 'A', value: 'a', style: 'green' }] }, /style/);

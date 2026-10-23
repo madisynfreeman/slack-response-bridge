@@ -5,6 +5,7 @@ export interface Config {
   slackAppToken: string;
   apiKey: string;
   callbackUrl?: string;
+  callbackSecret: string;
   port: number;
 }
 
@@ -20,6 +21,7 @@ export function loadConfig(): Config {
     slackAppToken: required('SLACK_APP_TOKEN'),
     apiKey: required('API_KEY'),
     callbackUrl: process.env.CALLBACK_URL || undefined,
+    callbackSecret: required('CALLBACK_SECRET'),
     port: Number(process.env.PORT) || 3000,
   };
 }

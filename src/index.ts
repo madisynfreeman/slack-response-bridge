@@ -1,4 +1,5 @@
 import { App } from '@slack/bolt';
+import { registerResponseHandler } from './actions';
 import { createApiServer } from './api';
 import { loadConfig } from './config';
 
@@ -6,6 +7,7 @@ const config = loadConfig();
 
 // Socket Mode: Slack events and button clicks arrive over a WebSocket, so no public URL is needed.
 const app = new App({ token: config.slackBotToken, appToken: config.slackAppToken, socketMode: true });
+registerResponseHandler(app, config.callbackSecret);
 
 const server = createApiServer({
   client: app.client,
